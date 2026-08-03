@@ -1,11 +1,13 @@
 [run]
 # Coverage target is the shipping runtime only. spike/ is a one-off reverse-
-# engineering harness (its "test" is running it against live LINE), and tests/
-# should not measure themselves.
+# engineering harness (its "test" is running it against live LINE), tools/ is
+# an interactive real-mouse-automation script not unit-testable in CI, and
+# tests/ should not measure themselves.
 branch = True
 omit =
     spike/*
     tests/*
+    tools/*
 
 [report]
 exclude_lines =

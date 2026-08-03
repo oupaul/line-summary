@@ -36,7 +36,7 @@ claude mcp add line --scope user -- python C:\path\to\line-summary\line_mcp_serv
 - 總結「XXX 群組」今天的對話
 - 幫我看「XXX」最近三天聊了什麼
 
-Claude 會呼叫三個工具把訊息撈出來，照 `skills/line-summary/SKILL.md` 的格式整理成摘要。
+Claude 會呼叫這幾個工具把訊息撈出來，照 `skills/line-summary/SKILL.md` 的格式整理成摘要。
 
 第一次呼叫要等大概 80 秒，它在掃 LINE 的記憶體找解密金鑰。找到之後會記住，同一個 session 後面都很快。
 
@@ -50,9 +50,20 @@ Claude 會呼叫三個工具把訊息撈出來，照 `skills/line-summary/SKILL.
 
 存在 `output/` 底下，這個資料夾已經寫進 `.gitignore`。裡面是真實對話內容，包含別人的發言，別放到公開的地方。
 
+## 選用工具：捲動補歷史（會操控真實滑鼠，跟上面不是同一件事）
+
+`tools/scroll_backfill.py` 是另一種性質的工具，跟上面的 MCP server **不一樣**：MCP
+server 只被動讀本機資料庫，這支工具**會真的操控你的滑鼠**，去自動捲動 LINE 電腦版視窗，
+觸發 LINE 官方「載入更早歷史」的機制，讓開放聊天室更早以前（你還沒同步到本機）的訊息
+被 LINE 拉下來、落地存進本機資料庫，之後 MCP server 才讀得到。
+
+這是選用的，預設不會執行，用法與風險說明見 `tools/README.md`。使用前務必自己讀過，
+它會接管你的滑鼠游標，執行期間不要碰滑鼠鍵盤。
+
 ## 安全與分寸
 
-- 只讀你自己電腦、你自己登入的 LINE。金鑰在記憶體裡用完就算了，不寫檔、不寫 log、不送上任何網路。聊天內容則會作為摘要素材交給 Claude Code 的模型，那一步是否離開本機取決於你的模型供應商。
+- MCP server 本身只讀你自己電腦、你自己登入的 LINE。金鑰在記憶體裡用完就算了，不寫檔、不寫 log、不送上任何網路。聊天內容則會作為摘要素材交給 Claude Code 的模型，那一步是否離開本機取決於你的模型供應商。
+- `tools/scroll_backfill.py` 是例外：它會控制真實滑鼠操作你自己登入的 LINE 用戶端，本質上是「自動化你自己手動會做的操作」，不呼叫任何私有 API、不連到 MCP server 以外的網路端點，但風險層級跟被動讀資料庫不同，用之前先看它自己的說明。
 - 群組和開放聊天室裡有別人的訊息。自己整理來看沒問題，要公開之前先想一下。
 - 目前只在 LINE 電腦版 26.3 上試過（它用 wxSQLite3 的 aes128cbc 加密）。LINE 改版可能就要重新確認加密方式。
 
