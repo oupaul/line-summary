@@ -167,6 +167,59 @@ def _meta(row: dict[str, Any]) -> dict:
         return {}
 
 
+def _parse_json_field(raw: str | None) -> dict:
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(raw)
+        return parsed if isinstance(parsed, dict) else {}
+    except Exception:
+        return {}
+
+
+def _contact_display_name(row: dict[str, Any]) -> str | None:
+    """Resolve a _contact row's display name.
+
+    CONFIRMED (2026-08-15) against the live DB: _displayName and
+    _displayNameOverridden are unpopulated on every row (2929/2929 NULL) --
+    this LINE version moved the real data into JSON blob columns instead.
+    _friendDetail.user.overriddenName is the nickname you manually set for
+    that person (LINE's own "edit name" feature); _targetProfileDetail.profileName
+    is their own LINE profile name. Preference: your manual override > their
+    profile name > legacy plain columns (kept as a fallback in case some rows,
+    or a future/older LINE version, populate them instead)."""
+    friend = _parse_json_field(row.get("_friendDetail"))
+    overridden = (friend.get("user") or {}).get("overriddenName")
+    if overridden:
+        return overridden
+    profile = _parse_json_field(row.get("_targetProfileDetail"))
+    profile_name = profile.get("profileName")
+    if profile_name:
+        return profile_name
+    return row.get("_displayNameOverridden") or row.get("_displayName")
+
+
+def _fetch_contact_name_rows(conn) -> list[dict]:
+    """Fetch _contact rows with every name-bearing column. Degrades to the
+    legacy 3-column set when the JSON profile columns aren't present (an
+    older LINE version, or a synthetic/test DB), rather than raising and
+    losing all name resolution for that connection."""
+    try:
+        rows = conn.execute(
+            f"SELECT _mid, _displayName, _displayNameOverridden, "
+            f"_friendDetail, _targetProfileDetail FROM {_T_CONTACT};"
+        )
+        return [dict(r) for r in rows]
+    except Exception:
+        try:
+            rows = conn.execute(
+                f"SELECT _mid, _displayName, _displayNameOverridden FROM {_T_CONTACT};"
+            )
+            return [dict(r) for r in rows]
+        except Exception:
+            return []
+
+
 def parse_message_row(row: dict[str, Any], contact_map: dict[str, str]) -> dict:
     """Map a raw _message row to a summary-friendly dict.
     Real columns: _from, _createdTime, _text, _contentType, _contentMetadata."""
@@ -224,10 +277,8 @@ class DbReader:
         squares = {r["_squareChatMid"]: r["_name"]
                    for r in safe(f"SELECT _squareChatMid, _name FROM {_T_SQUARE};")}
         contacts = {
-            r["_mid"]: (r["_displayNameOverridden"] or r["_displayName"])
-            for r in safe(
-                f"SELECT _mid, _displayName, _displayNameOverridden FROM {_T_CONTACT};"
-            )
+            r["_mid"]: _contact_display_name(r)
+            for r in _fetch_contact_name_rows(conn)
         }
         rooms = {r["_mid"]: r for r in safe(f"SELECT _mid FROM {_T_ROOM};")}
         official = self._official_mids(conn)
@@ -256,10 +307,8 @@ class DbReader:
                 return list(conn.execute(sql))
             except Exception:
                 return []
-        m = {r["_mid"]: (r["_displayNameOverridden"] or r["_displayName"])
-             for r in safe(
-                 f"SELECT _mid, _displayName, _displayNameOverridden FROM {_T_CONTACT};"
-             )}
+        m = {r["_mid"]: _contact_display_name(r)
+             for r in _fetch_contact_name_rows(conn)}
         for r in safe(
             f"SELECT _squareMemberMid, _displayName FROM {_T_SQUARE_MEMBER};"
         ):
