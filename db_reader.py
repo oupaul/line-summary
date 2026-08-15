@@ -220,6 +220,21 @@ def _fetch_contact_name_rows(conn) -> list[dict]:
             return []
 
 
+def _fetch_own_profile(conn) -> dict[str, str]:
+    """mid -> display name for the local account itself.
+
+    CONFIRMED (2026-08-15): LINE stores the logged-in user's own identity in
+    _profile, never in _contact (you're not your own friend) -- so any
+    message you sent yourself fell back to your raw mid with no fix to
+    _contact/_contacts_map able to reach it. Table is 0-or-1 rows; degrades
+    to {} for schemas without it (older LINE version, synthetic/test DB)."""
+    try:
+        rows = list(conn.execute("SELECT _mid, _displayName FROM _profile;"))
+        return {r["_mid"]: r["_displayName"] for r in rows if r["_mid"]}
+    except Exception:
+        return {}
+
+
 def parse_message_row(row: dict[str, Any], contact_map: dict[str, str]) -> dict:
     """Map a raw _message row to a summary-friendly dict.
     Real columns: _from, _createdTime, _text, _contentType, _contentMetadata."""
@@ -280,6 +295,7 @@ class DbReader:
             r["_mid"]: _contact_display_name(r)
             for r in _fetch_contact_name_rows(conn)
         }
+        contacts.update(_fetch_own_profile(conn))
         rooms = {r["_mid"]: r for r in safe(f"SELECT _mid FROM {_T_ROOM};")}
         official = self._official_mids(conn)
         return {"group": groups, "square": squares, "contact": contacts,
@@ -300,8 +316,10 @@ class DbReader:
         return chat_id, "unknown"
 
     def _contacts_map(self, conn) -> dict[str, str]:
-        """mid -> display name. Covers friends (_contact) AND OpenChat members
-        (_squareMember), since square senders are not in _contact."""
+        """mid -> display name. Covers friends (_contact), OpenChat members
+        (_squareMember, since square senders are not in _contact), and the
+        local account itself (_profile, since you're not your own friend
+        either -- otherwise every message you sent falls back to your raw mid)."""
         def safe(sql: str) -> list:
             try:
                 return list(conn.execute(sql))
@@ -313,6 +331,7 @@ class DbReader:
             f"SELECT _squareMemberMid, _displayName FROM {_T_SQUARE_MEMBER};"
         ):
             m.setdefault(r["_squareMemberMid"], r["_displayName"])
+        m.update(_fetch_own_profile(conn))
         return m
 
     # -- public API ------------------------------------------------------------
