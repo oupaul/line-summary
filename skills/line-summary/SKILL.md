@@ -223,6 +223,15 @@ scanning broadly)：實際名單存在本機 `local-context.md`（不會被 comm
 Output: group by client, list this-period items with status marks, end with
 totals (✅/⚠️/❌ counts). Real names only — never raw mid IDs in the final report.
 
+**Save Output（工作進度模式專用）** — 報告整理完、顯示給使用者看之後，把同一份
+markdown 內容存檔一份，路徑依範圍分類（日期格式一律 `YYYY-MM-DD`）：
+- 單日：`~/line-summary/output/日報/<日期>.md`
+- 單一客戶：`~/line-summary/output/客戶進度/<客戶>_<since>_<until>.md`
+- 全公司多日：`~/line-summary/output/週報/<since>_<until>.md`
+
+存完在回覆最後補一句存檔路徑。這組規則跟下面「Save Output」單一聊天室摘要
+的 `metadata.json` 機制是分開的，工作進度模式不用寫 metadata.json。
+
 ## Save Output
 
 Path: `~/line-summary/output/<chat_id>/<YYYY-MM-DD>.md`
