@@ -232,6 +232,17 @@ markdown 內容存檔一份，路徑依範圍分類（日期格式一律 `YYYY-M
 存完在回覆最後補一句存檔路徑。這組規則跟下面「Save Output」單一聊天室摘要
 的 `metadata.json` 機制是分開的，工作進度模式不用寫 metadata.json。
 
+**同步到內部網站（選用）** — 若 `local-context.md` 裡有「報告同步伺服器」
+設定（SSH 目標、遠端報告根目錄、金鑰路徑都有填），本機存檔完後額外執行：
+
+```
+scp -i <金鑰路徑> <本機檔案路徑> <SSH目標>:<遠端報告根目錄>/<對應子資料夾>/
+```
+
+（子資料夾對應關係跟本機一樣：日報/客戶進度/週報）。同步結果（成功或失敗，
+含失敗原因）在回覆裡如實講一句，不要靜默失敗或假裝成功。`local-context.md`
+沒有這段設定就直接跳過，不用問使用者。部署步驟見 `docs/REPORT_SERVER.md`。
+
 ## Save Output
 
 Path: `~/line-summary/output/<chat_id>/<YYYY-MM-DD>.md`

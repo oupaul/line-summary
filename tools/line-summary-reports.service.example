@@ -1,0 +1,25 @@
+# systemd unit template for tools/report_server.py.
+#
+# Copy to /etc/systemd/system/line-summary-reports.service on the internal
+# server, fill in the placeholders (<...>), then:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now line-summary-reports
+
+[Unit]
+Description=line-summary internal work-progress report dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=<service-user>
+WorkingDirectory=<install-dir, e.g. /opt/line-summary-reports-app>
+Environment=REPORTS_ROOT=<reports-dir, e.g. /opt/line-summary-reports>
+Environment=REPORTS_HOST=0.0.0.0
+Environment=REPORTS_PORT=8787
+Environment=REPORTS_AUTH_USER=<pick a username>
+Environment=REPORTS_AUTH_PASS=<pick a strong password>
+ExecStart=/usr/bin/python3 <install-dir>/report_server.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

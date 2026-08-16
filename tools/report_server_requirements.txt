@@ -1,0 +1,4 @@
+# Server-side only (runs on the internal Linux host, not on the Windows
+# LINE-reading machine) -- deliberately kept out of the main requirements.txt.
+flask>=3.0,<4
+markdown>=3.5,<4
