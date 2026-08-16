@@ -35,3 +35,8 @@ tests/test_phase0_spike.py
 # Template lives in local-context.example.md (committed); this one holds your
 # actual data and must never be committed.
 skills/line-summary/local-context.md
+
+# Real deployment records (server IPs, account names, passwords). Generic
+# how-to templates live in docs/*.md (committed); files matching this pattern
+# hold actual infra details and must never be committed.
+docs/DEPLOYMENT_RECORD*.md
