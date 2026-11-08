@@ -1,0 +1,7 @@
+{
+  "customer": "客戶A",
+  "chat_keywords": ["客戶A"],
+  "team_prefix": "我方公司-",
+  "engineers": ["工程師甲"],
+  "exclude": ["我方公司-業務乙"]
+}

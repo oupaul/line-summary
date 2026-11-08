@@ -43,3 +43,10 @@ docs/DEPLOYMENT_RECORD*.md
 
 # macOS Finder metadata — never useful to commit.
 .DS_Store
+
+# 真實客戶聊天匯出與維護記錄單輸出（含客戶資料/人名），不得提交
+chats/
+產出/
+
+# 維護記錄單產生器的本機設定（含真實客戶名/人員名），範本為 maintenance_local.example.json
+tools/maintenance_local.json
